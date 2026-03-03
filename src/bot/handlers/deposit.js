@@ -117,7 +117,7 @@ export async function cryptoHandler(ctx) {
   }
 
   await updateDepositPayment(depositId, {
-    nowPaymentId: payment.payment_id,
+    nowPaymentId: String(payment.payment_id),
     payAddress:   payment.pay_address,
     payAmount:    payment.pay_amount,
   });

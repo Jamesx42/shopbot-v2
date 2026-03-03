@@ -50,7 +50,7 @@ export async function handleNowPaymentsWebhook(req, res, bot) {
     return res.status(401).send('Signature error');
   }
 
-  const { payment_id, payment_status, order_id, outcome_amount } = payload;
+  const { payment_id, payment_status, order_id } = payload;
   console.log(`[WEBHOOK] payment_id=${payment_id} status=${payment_status}`);
 
   // Find deposit — try by payment_id first, then order_id fallback
@@ -80,12 +80,9 @@ export async function handleNowPaymentsWebhook(req, res, bot) {
   }
 
   else if (payment_status === 'finished') {
-    const reportedUsd = outcome_amount
-      ? Math.floor(Number(outcome_amount) * 100)
-      : deposit.priceUsd;
-
-    // Cap at 10% over requested amount to handle minor crypto fluctuations
-    const actualUsd = Math.min(reportedUsd, Math.floor(deposit.priceUsd * 1.1));
+    // outcome_amount is the crypto amount received, not USD — always credit the
+    // original requested USD amount (priceUsd) that the user chose to deposit.
+    const actualUsd = deposit.priceUsd;
 
     await updateDepositStatus(String(payment_id), 'finished', actualUsd);
 
