@@ -1,0 +1,14 @@
+{
+  "name": "shopbot",
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "grammy": "^1.21.1",
+    "mongodb": "^6.3.0"
+  }
+}
