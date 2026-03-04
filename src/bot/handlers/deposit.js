@@ -12,13 +12,6 @@ function qrUrl(data) {
   return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data)}`;
 }
 
-// Build crypto URI for pre-filled QR
-function buildCryptoUri(ticker, address, amount) {
-  if (ticker === 'usdttrc20') return `tron:${address}?amount=${amount}`;
-  if (ticker === 'btc') return `bitcoin:${address}?amount=${amount}`;
-  if (ticker === 'eth') return `ethereum:${address}?value=${amount}`;
-  return address; // fallback — just address
-}
 
 // Step 1 — show preset USDT amount buttons
 export async function depositHandler(ctx) {
@@ -114,9 +107,8 @@ async function createInvoice(ctx, amountCents) {
 
   await clearSession(ctx.from.id);
 
-  // Build pre-filled QR URI
-  const cryptoUri = buildCryptoUri(ticker, payment.pay_address, payment.pay_amount);
-  const qr = qrUrl(cryptoUri);
+  // Plain address QR — works in every wallet and exchange app
+  const qr = qrUrl(payment.pay_address);
 
   const keyboard = new InlineKeyboard()
     .text('🔄  Check Status', `check_${depositId}`).row()
@@ -124,15 +116,14 @@ async function createInvoice(ctx, amountCents) {
 
   const caption =
     `💳 *USDT TRC20 Payment*\n\n` +
-    `Scan QR with your wallet — amount is pre-filled.\n\n` +
-    `📤 Send exactly:\n` +
-    `*${payment.pay_amount} USDT*\n\n` +
-    `📬 To address:\n` +
+    `📬 *Address:*\n` +
     `\`${payment.pay_address}\`\n\n` +
-    `💰 You receive: *${fmt.usdt(amountCents)}*\n` +
+    `💰 *Amount to send:*\n` +
+    `*${payment.pay_amount} USDT*\n\n` +
+    `✅ You receive: *${fmt.usdt(amountCents)}*\n` +
     `⏱ Expires in: *${PAYMENT_EXPIRY_MIN} minutes*\n\n` +
-    `⚠️ Send exact amount shown above.\n` +
-    `Network fee is included in the amount.`;
+    `⚠️ Send *exact amount* above.\n` +
+    `Network fee (TRX) paid separately by your wallet.`;
 
   // Send QR as photo with payment details as caption
   try {
