@@ -1,21 +1,21 @@
 // src/collections/deposits.js
-import { getDB }    from '../db/client.js';
+import { getDB } from '../db/client.js';
 import { ObjectId } from 'mongodb';
 
 const col = () => getDB().collection('deposits');
 
-export async function createDeposit({ telegramId, payCurrency, priceUsd, expiresAt }) {
+export async function createDeposit({ telegramId, payCurrency, priceUsdt, expiresAt }) {
   const result = await col().insertOne({
     telegramId,
     payCurrency,
-    priceUsd,     // cents
-    actualUsd:    null,
+    priceUsdt,    // cents — what user requested in USDT
+    actualUsdt: null,
     nowPaymentId: null,
-    payAddress:   null,
-    payAmount:    null,
-    status:       'waiting',
+    payAddress: null,
+    payAmount: null,
+    status: 'waiting',
     expiresAt,
-    createdAt:    new Date(),
+    createdAt: new Date(),
   });
   return result.insertedId;
 }
@@ -27,9 +27,9 @@ export async function updateDepositPayment(id, { nowPaymentId, payAddress, payAm
   );
 }
 
-export async function updateDepositStatus(nowPaymentId, status, actualUsd = null) {
+export async function updateDepositStatus(nowPaymentId, status, actualUsdt = null) {
   const $set = { status };
-  if (actualUsd !== null) $set.actualUsd = actualUsd;
+  if (actualUsdt !== null) $set.actualUsdt = actualUsdt;
   if (status === 'finished') $set.completedAt = new Date();
   return col().updateOne({ nowPaymentId: String(nowPaymentId) }, { $set });
 }

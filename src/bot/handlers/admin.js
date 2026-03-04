@@ -39,7 +39,7 @@ export async function adminProductsHandler(ctx) {
   for (const p of products) {
     const stock  = await getStockCount(p._id.toString());
     const status = p.isActive ? '✅' : '❌';
-    keyboard.text(`${status} ${p.name} — ${fmt.usd(p.price)} (${stock})`, `admin_prod_${p._id}`).row();
+    keyboard.text(`${status} ${p.name} — ${fmt.usdt(p.price)} (${stock})`, `admin_prod_${p._id}`).row();
   }
   keyboard.text('⬅️  Back', 'admin');
 
@@ -62,8 +62,8 @@ export async function adminProductActionsHandler(ctx) {
 
   await safeEdit(ctx,
     `📦 *${product.name}*\n` +
-    `Price: ${fmt.usd(product.price)}\n` +
-    `Recharge Price: ${fmt.usd(product.rechargePrice)}\n` +
+    `Price: ${fmt.usdt(product.price)}\n` +
+    `Recharge Price: ${fmt.usdt(product.rechargePrice)}\n` +
     `Status: ${product.isActive ? '✅ Active' : '❌ Inactive'}\n` +
     `Stock: ${stock} keys  |  Sold: ${product.totalSold}`,
     {
@@ -152,8 +152,8 @@ export async function adminTextHandler(ctx) {
       `✅ *Confirm New Product:*\n\n` +
       `Name: *${s.name}*\n` +
       `Description: ${s.description}\n` +
-      `Price: *${fmt.usd(s.price)}*\n` +
-      `Recharge Price: *${fmt.usd(s.rechargePrice)}*`,
+      `Price: *${fmt.usdt(s.price)}*\n` +
+      `Recharge Price: *${fmt.usdt(s.rechargePrice)}*`,
       {
         parse_mode:   'Markdown',
         reply_markup: new InlineKeyboard()
@@ -205,7 +205,7 @@ export async function adminConfirmProductHandler(ctx) {
   await clearSession(ctx.from.id);
 
   await safeEdit(ctx,
-    `✅ *Product Created!*\n\n*${session.name}* — ${fmt.usd(session.price)}\nRecharge: ${fmt.usd(session.rechargePrice)}\n\nNow add license keys to it.`,
+    `✅ *Product Created!*\n\n*${session.name}* — ${fmt.usdt(session.price)}\nRecharge: ${fmt.usdt(session.rechargePrice)}\n\nNow add license keys to it.`,
     {
       parse_mode:   'Markdown',
       reply_markup: new InlineKeyboard().text('📦  View Products', 'admin_products'),
@@ -227,7 +227,7 @@ export async function adminStatsHandler(ctx) {
     `📊 *Bot Stats*\n\n` +
     `👥 Total Users: ${userCount}\n` +
     `🛒 Total Orders: ${orderCount}\n` +
-    `💰 Total Revenue: *${fmt.usd(revenue)}*`,
+    `💰 Total Revenue: *${fmt.usdt(revenue)}*`,
     {
       parse_mode:   'Markdown',
       reply_markup: new InlineKeyboard()
@@ -280,7 +280,7 @@ export async function adminRechargesHandler(ctx) {
 
   const keyboard = new InlineKeyboard();
   for (const r of recharges) {
-    const label = `${r.productName} — ${fmt.usd(r.amount)} — ${fmt.date(r.createdAt)}`;
+    const label = `${r.productName} — ${fmt.usdt(r.amount)} — ${fmt.date(r.createdAt)}`;
     keyboard.text(label, `admin_recharge_view_${r._id}`).row();
   }
   keyboard.text('⬅️  Back', 'admin');
@@ -308,7 +308,7 @@ export async function adminRechargeViewHandler(ctx) {
     `⚡ *Recharge Request*\n\n` +
     `📦 Product: *${recharge.productName}*\n` +
     `🔑 Account: \`${recharge.licenseKey}\`\n` +
-    `💰 Amount: *${fmt.usd(recharge.amount)}*\n` +
+    `💰 Amount: *${fmt.usdt(recharge.amount)}*\n` +
     `📅 Requested: ${fmt.date(recharge.createdAt)}\n` +
     `👤 User ID: \`${recharge.telegramId}\``,
     {
@@ -341,7 +341,7 @@ export async function adminRechargeCompleteHandler(ctx) {
     recharge.telegramId,
     `✅ *Your Account Has Been Recharged!*\n\n` +
     `📦 Product: *${recharge.productName}*\n` +
-    `💰 Amount: *${fmt.usd(recharge.amount)}*\n\n` +
+    `💰 Amount: *${fmt.usdt(recharge.amount)}*\n\n` +
     `You're all set! Enjoy.`,
     { parse_mode: 'Markdown' }
   ).catch(e => console.error('[RECHARGE] Buyer notify failed:', e.message));

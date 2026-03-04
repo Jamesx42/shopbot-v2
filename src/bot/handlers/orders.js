@@ -47,12 +47,12 @@ export async function orderDetailHandler(ctx) {
   const text =
     `📦 *Order Details*\n\n` +
     `Product: *${order.productName}*\n` +
-    `Paid: *${fmt.usd(order.amountPaid)}*\n` +
+    `Paid: *${fmt.usdt(order.amountPaid)}*\n` +
     `Date: ${fmt.date(order.createdAt)}\n\n` +
     `🔐 *Login Credentials:*\n\`${order.licenseKey}\``;
 
   const keyboard = new InlineKeyboard()
-    .text(`⚡  Recharge  ${fmt.usd(order.rechargePrice)}`, `recharge_${orderId}`).row()
+    .text(`⚡  Recharge  ${fmt.usdt(order.rechargePrice)}`, `recharge_${orderId}`).row()
     .text('⬅️  Back', 'orders');
 
   await safeEdit(ctx, text, { parse_mode: 'Markdown', reply_markup: keyboard });

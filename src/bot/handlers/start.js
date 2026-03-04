@@ -13,7 +13,7 @@ export async function startHandler(ctx) {
     `👋 Welcome${user.firstName ? `, *${user.firstName}*` : ''}!\n\n` +
     `🏪 *Digital Shop Bot*\n` +
     `Buy digital products instantly.\n\n` +
-    `💼 Your Balance: *${fmt.usd(user.balance)}*`;
+    `💼 Your Balance: *${fmt.usdt(user.balance)}*`;
 
   const keyboard = isAdmin ? kb.mainMenuAdmin() : kb.mainMenu();
 

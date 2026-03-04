@@ -1,5 +1,5 @@
 // src/webhooks/nowpayments.js
-import { verifyWebhookSignature }  from '../services/nowpayments.js';
+import { verifyWebhookSignature } from '../services/nowpayments.js';
 import { getDepositByNowPaymentId, getDepositById, updateDepositStatus } from '../collections/deposits.js';
 import { credit } from '../services/balance.js';
 
@@ -50,7 +50,7 @@ export async function handleNowPaymentsWebhook(req, res, bot) {
     return res.status(401).send('Signature error');
   }
 
-  const { payment_id, payment_status, order_id } = payload;
+  const { payment_id, payment_status, order_id, outcome_amount } = payload;
   console.log(`[WEBHOOK] payment_id=${payment_id} status=${payment_status}`);
 
   // Find deposit — try by payment_id first, then order_id fallback
@@ -80,26 +80,26 @@ export async function handleNowPaymentsWebhook(req, res, bot) {
   }
 
   else if (payment_status === 'finished') {
-    // outcome_amount is the crypto amount received, not USD — always credit the
-    // original requested USD amount (priceUsd) that the user chose to deposit.
-    const actualUsd = deposit.priceUsd;
+    // Credit exactly what user requested in USDT — NowPayments already
+    // validated the payment is sufficient before marking finished
+    const actualUsdt = deposit.priceUsdt;
 
-    await updateDepositStatus(String(payment_id), 'finished', actualUsd);
+    await updateDepositStatus(String(payment_id), 'finished', actualUsdt);
 
     const user = await credit(
       deposit.telegramId,
-      actualUsd,
-      `Crypto deposit (${deposit.payCurrency.toUpperCase()})`,
+      actualUsdt,
+      `USDT TRC20 deposit`,
       deposit._id
     );
 
-    console.log('[WEBHOOK] ✅ Credited', actualUsd, 'cents — new balance:', user.balance);
+    console.log('[WEBHOOK] ✅ Credited', actualUsdt, 'cents — new balance:', user.balance);
 
     await bot.api.sendMessage(
       deposit.telegramId,
       `✅ *Balance Credited!*\n\n` +
-      `💰 Amount: *$${(actualUsd / 100).toFixed(2)}*\n` +
-      `💼 New Balance: *$${(user.balance / 100).toFixed(2)}*\n\n` +
+      `💰 Amount: *${(actualUsdt / 100).toFixed(2)} USDT*\n` +
+      `💼 New Balance: *${(user.balance / 100).toFixed(2)} USDT*\n\n` +
       `You can now purchase products!`,
       { parse_mode: 'Markdown' }
     ).catch(e => console.error('[WEBHOOK] Notify error:', e.message));
@@ -111,7 +111,7 @@ export async function handleNowPaymentsWebhook(req, res, bot) {
       deposit.telegramId,
       `❌ *Payment ${payment_status === 'expired' ? 'Expired' : 'Failed'}*\n\nPlease try again from Load Balance.`,
       { parse_mode: 'Markdown' }
-    ).catch(() => {});
+    ).catch(() => { });
   }
 
   return res.status(200).send('OK');

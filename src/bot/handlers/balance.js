@@ -15,15 +15,15 @@ export async function balanceHandler(ctx) {
   if (txns.length) {
     txText = '\n\n📜 *Recent Transactions:*\n' +
       txns.map(t =>
-        `${typeEmoji[t.type] || '•'} ${t.description}  ${t.amount > 0 ? '+' : ''}${fmt.usd(t.amount)}`
+        `${typeEmoji[t.type] || '•'} ${t.description}  ${t.amount > 0 ? '+' : ''}${fmt.usdt(t.amount)}`
       ).join('\n');
   }
 
   const text =
     `💼 *My Balance*\n\n` +
-    `💰 Available: *${fmt.usd(user.balance)}*\n` +
-    `📈 Total Deposited: ${fmt.usd(user.totalDeposited)}\n` +
-    `🛒 Total Spent: ${fmt.usd(user.totalSpent)}` +
+    `💰 Available: *${fmt.usdt(user.balance)}*\n` +
+    `📈 Total Deposited: ${fmt.usdt(user.totalDeposited)}\n` +
+    `🛒 Total Spent: ${fmt.usdt(user.totalSpent)}` +
     txText;
 
   const keyboard = new InlineKeyboard()

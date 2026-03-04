@@ -3,24 +3,25 @@ import { getConfig } from '../config.js';
 
 function getHeaders() {
   return {
-    'x-api-key':    getConfig().NOWPAYMENTS_API_KEY,
+    'x-api-key': getConfig().NOWPAYMENTS_API_KEY,
     'Content-Type': 'application/json',
   };
 }
 
-export async function createPayment({ priceUsd, payCurrency, depositId }) {
+export async function createPayment({ amountUsdt, payCurrency, depositId }) {
   const { NOWPAYMENTS_API_URL, WEBHOOK_URL } = getConfig();
 
   const res = await fetch(`${NOWPAYMENTS_API_URL}/payment`, {
-    method:  'POST',
+    method: 'POST',
     headers: getHeaders(),
     body: JSON.stringify({
-      price_amount:       priceUsd / 100,  // NOWPayments expects dollars
-      price_currency:     'usd',
-      pay_currency:       payCurrency,
-      order_id:           depositId,
-      order_description:  'Balance top-up',
-      ipn_callback_url:   `${WEBHOOK_URL}/webhook/nowpayments`,
+      price_amount: amountUsdt / 100,  // cents → USDT units
+      price_currency: 'usdttrc20',       // always price in USDT
+      pay_currency: payCurrency,       // what user pays with
+      order_id: depositId,
+      order_description: 'Balance top-up',
+      ipn_callback_url: `${WEBHOOK_URL}/webhook/nowpayments`,
+      is_fee_paid_by_user: true,            // user pays network fee on top
     }),
   });
 
@@ -44,7 +45,7 @@ export async function getPaymentStatus(paymentId) {
 export async function verifyWebhookSignature(payload, receivedSig) {
   const { NOWPAYMENTS_IPN_SECRET } = getConfig();
   const encoder = new TextEncoder();
-  const sorted  = JSON.stringify(sortDeep(payload));
+  const sorted = JSON.stringify(sortDeep(payload));
 
   const key = await crypto.subtle.importKey(
     'raw',
@@ -54,7 +55,7 @@ export async function verifyWebhookSignature(payload, receivedSig) {
     ['sign']
   );
 
-  const sig      = await crypto.subtle.sign('HMAC', key, encoder.encode(sorted));
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(sorted));
   const expected = Array.from(new Uint8Array(sig))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');

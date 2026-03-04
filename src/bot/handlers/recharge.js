@@ -23,8 +23,8 @@ export async function requestRechargeHandler(ctx) {
   if (ctx.user.balance < cost) {
     await safeEdit(ctx,
       `❌ *Insufficient Balance*\n\n` +
-      `Recharge costs: *${fmt.usd(cost)}*\n` +
-      `Your balance: *${fmt.usd(ctx.user.balance)}*\n\n` +
+      `Recharge costs: *${fmt.usdt(cost)}*\n` +
+      `Your balance: *${fmt.usdt(ctx.user.balance)}*\n\n` +
       `Please load your balance first.`,
       {
         parse_mode:   'Markdown',
@@ -40,8 +40,8 @@ export async function requestRechargeHandler(ctx) {
     `⚡ *Request Recharge*\n\n` +
     `Product: *${order.productName}*\n` +
     `Account: \`${order.licenseKey}\`\n` +
-    `Cost: *${fmt.usd(cost)}*\n` +
-    `Your Balance: *${fmt.usd(ctx.user.balance)}*\n\n` +
+    `Cost: *${fmt.usdt(cost)}*\n` +
+    `Your Balance: *${fmt.usdt(ctx.user.balance)}*\n\n` +
     `Balance will be deducted now. Admin will be notified to recharge your account.`,
     {
       parse_mode:   'Markdown',
@@ -76,7 +76,7 @@ export async function confirmRechargeHandler(ctx) {
     await safeEdit(ctx,
       `✅ *Recharge Requested!*\n\n` +
       `Product: *${order.productName}*\n` +
-      `Amount deducted: *${fmt.usd(cost)}*\n\n` +
+      `Amount deducted: *${fmt.usdt(cost)}*\n\n` +
       `Admin has been notified and will recharge your account shortly.`,
       {
         parse_mode:   'Markdown',
@@ -95,7 +95,7 @@ export async function confirmRechargeHandler(ctx) {
       `👤 User: ${buyerName}\n` +
       `📦 Product: ${order.productName}\n` +
       `🔑 Account: \`${order.licenseKey}\`\n` +
-      `💰 Amount: *${fmt.usd(cost)}*`;
+      `💰 Amount: *${fmt.usdt(cost)}*`;
 
     for (const adminId of ADMIN_IDS) {
       await ctx.api.sendMessage(adminId, adminMsg, {
@@ -138,7 +138,7 @@ export async function adminRechargeCompleteHandler(ctx) {
     recharge.telegramId,
     `✅ *Your Account Has Been Recharged!*\n\n` +
     `📦 Product: *${recharge.productName}*\n` +
-    `💰 Amount: *${fmt.usd(recharge.amount)}*\n\n` +
+    `💰 Amount: *${fmt.usdt(recharge.amount)}*\n\n` +
     `You're all set! Enjoy.`,
     { parse_mode: 'Markdown' }
   ).catch(e => console.error('[RECHARGE] Buyer notify failed:', e.message));

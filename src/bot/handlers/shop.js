@@ -1,14 +1,14 @@
 // src/bot/handlers/shop.js
 import { InlineKeyboard } from 'grammy';
 import { getActiveProducts, getProductById, getStockCount, reserveKey } from '../../collections/products.js';
-import { createOrder }   from '../../collections/orders.js';
-import { debit }         from '../../services/balance.js';
-import { getClient }     from '../../db/client.js';
-import { getConfig }     from '../../config.js';
+import { createOrder } from '../../collections/orders.js';
+import { debit } from '../../services/balance.js';
+import { getClient } from '../../db/client.js';
+import { getConfig } from '../../config.js';
 import { fmt, kb, safeEdit } from '../helpers.js';
 
 export async function shopHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const products = await getActiveProducts();
 
@@ -20,35 +20,41 @@ export async function shopHandler(ctx) {
   }
 
   const keyboard = new InlineKeyboard();
+  let rowLen = 0;
   for (const p of products) {
-    keyboard.text(`${p.name}  —  ${fmt.usd(p.price)}`, `prod_${p._id}`).row();
+    const label = `${p.name} · ${fmt.usdt(p.price)}`;
+    const cols = label.length <= 20 ? 2 : 1; // short = 2/row, long = 1/row
+    keyboard.text(label, `prod_${p._id}`);
+    rowLen++;
+    if (rowLen >= cols) { keyboard.row(); rowLen = 0; }
   }
+  if (rowLen > 0) keyboard.row();
   keyboard.text('⬅️  Back', 'start');
 
-  await safeEdit(ctx, '🛍 *Shop* — Choose a product:', {
-    parse_mode:   'Markdown',
+  await safeEdit(ctx, '🛍 *Shop*\n\nChoose a product:', {
+    parse_mode: 'Markdown',
     reply_markup: keyboard,
   });
 }
 
 export async function productHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const productId = ctx.match[1];
-  const product   = await getProductById(productId);
+  const product = await getProductById(productId);
 
   if (!product) {
-    await ctx.answerCallbackQuery({ text: 'Product not found.', show_alert: true }).catch(() => {});
+    await ctx.answerCallbackQuery({ text: 'Product not found.', show_alert: true }).catch(() => { });
     return;
   }
 
-  const stock    = await getStockCount(productId);
+  const stock = await getStockCount(productId);
   const hasStock = stock > 0;
 
   const text =
     `📦 *${product.name}*\n\n` +
     `${product.description}\n\n` +
-    `💰 Price: *${fmt.usd(product.price)}*\n` +
+    `💰 Price: *${fmt.usdt(product.price)}*\n` +
     `📊 Stock: ${hasStock ? `✅ In Stock (${stock})` : '❌ Out of Stock'}`;
 
   const keyboard = new InlineKeyboard();
@@ -59,11 +65,11 @@ export async function productHandler(ctx) {
 }
 
 export async function buyHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const productId = ctx.match[1];
-  const product   = await getProductById(productId);
-  const user      = ctx.user;
+  const product = await getProductById(productId);
+  const user = ctx.user;
 
   if (!product) return;
 
@@ -91,15 +97,15 @@ export async function buyHandler(ctx) {
 }
 
 export async function confirmBuyHandler(ctx) {
-  await ctx.answerCallbackQuery({ text: 'Processing...' }).catch(() => {});
+  await ctx.answerCallbackQuery({ text: 'Processing...' }).catch(() => { });
 
   const productId = ctx.match[1];
-  const user      = ctx.user;
-  const product   = await getProductById(productId);
+  const user = ctx.user;
+  const product = await getProductById(productId);
   if (!product) return;
 
   const mongoClient = getClient();
-  const session     = mongoClient.startSession();
+  const session = mongoClient.startSession();
 
   try {
     let licenseKey;
@@ -115,12 +121,12 @@ export async function confirmBuyHandler(ctx) {
 
       // 3. Create order with key embedded
       orderId = await createOrder({
-        telegramId:    user.telegramId,
+        telegramId: user.telegramId,
         productId,
-        productName:   product.name,
-        amountPaid:    product.price,
+        productName: product.name,
+        amountPaid: product.price,
         rechargePrice: product.rechargePrice || product.price,
-        licenseKey:    licenseKey.key,
+        licenseKey: licenseKey.key,
       }, session);
     });
 
@@ -146,7 +152,7 @@ export async function confirmBuyHandler(ctx) {
         adminId,
         `🛒 *New Sale!*\n\n👤 Buyer: ${buyerName}\n📦 Product: ${product.name}\n💰 Amount: ${fmt.usd(product.price)}`,
         { parse_mode: 'Markdown' }
-      ).catch(() => {});
+      ).catch(() => { });
     }
 
   } catch (err) {
