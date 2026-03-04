@@ -58,7 +58,7 @@ export async function productHandler(ctx) {
     `📊 Stock: ${hasStock ? `✅ In Stock (${stock})` : '❌ Out of Stock'}`;
 
   const keyboard = new InlineKeyboard();
-  if (hasStock) keyboard.text(`💳  Buy  ${fmt.usd(product.price)}`, `buy_${productId}`).row();
+  if (hasStock) keyboard.text(`💳  Buy  ${fmt.usdt(product.price)}`, `buy_${productId}`).row();
   keyboard.text('⬅️  Back', 'shop');
 
   await safeEdit(ctx, text, { parse_mode: 'Markdown', reply_markup: keyboard });
@@ -78,11 +78,11 @@ export async function buyHandler(ctx) {
   const text =
     `🛒 *Confirm Purchase*\n\n` +
     `Product: *${product.name}*\n` +
-    `Price: *${fmt.usd(product.price)}*\n` +
-    `Your Balance: *${fmt.usd(user.balance)}*\n\n` +
+    `Price: *${fmt.usdt(product.price)}*\n` +
+    `Your Balance: *${fmt.usdt(user.balance)}*\n\n` +
     (canAfford
       ? `✅ Tap confirm to complete your purchase.`
-      : `❌ Insufficient balance. You need *${fmt.usd(product.price - user.balance)}* more.`
+      : `❌ Insufficient balance. You need *${fmt.usdt(product.price - user.balance)}* more.`
     );
 
   const keyboard = new InlineKeyboard();
@@ -134,7 +134,7 @@ export async function confirmBuyHandler(ctx) {
     await safeEdit(ctx,
       `✅ *Purchase Successful!*\n\n` +
       `Product: *${product.name}*\n` +
-      `Paid: *${fmt.usd(product.price)}*`,
+      `Paid: *${fmt.usdt(product.price)}*`,
       { parse_mode: 'Markdown' }
     );
 
@@ -150,7 +150,7 @@ export async function confirmBuyHandler(ctx) {
     for (const adminId of ADMIN_IDS) {
       await ctx.api.sendMessage(
         adminId,
-        `🛒 *New Sale!*\n\n👤 Buyer: ${buyerName}\n📦 Product: ${product.name}\n💰 Amount: ${fmt.usd(product.price)}`,
+        `🛒 *New Sale!*\n\n👤 Buyer: ${buyerName}\n📦 Product: ${product.name}\n💰 Amount: ${fmt.usdt(product.price)}`,
         { parse_mode: 'Markdown' }
       ).catch(() => { });
     }
