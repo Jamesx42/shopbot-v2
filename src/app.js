@@ -1,8 +1,8 @@
 // src/app.js — Railway entry point
 import 'dotenv/config';
-import http             from 'http';
+import http from 'http';
 import { connectDB, closeDB } from './db/client.js';
-import { createBot }    from './bot/index.js';
+import { createBot } from './bot/index.js';
 import { handleNowPaymentsWebhook } from './webhooks/nowpayments.js';
 
 const PORT = process.env.PORT || 8080;
@@ -16,8 +16,7 @@ const bot = createBot();
 
 // Register bot command menu (shown in the "/" menu bar)
 await bot.api.setMyCommands([
-  { command: 'start', description: '🏠 Main Menu' },
-  { command: 'menu',  description: '🏠 Main Menu' },
+  { command: 'menu', description: '🏠 Main Menu' },
 ]);
 
 // Delete any existing webhook — ensure long polling works cleanly
@@ -101,10 +100,10 @@ async function shutdown(signal) {
   }
   try {
     server.close(() => console.log('✅ HTTP server closed'));
-  } catch {}
+  } catch { }
   await closeDB();
   process.exit(0);
 }
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
-process.on('SIGINT',  () => shutdown('SIGINT'));
+process.on('SIGINT', () => shutdown('SIGINT'));

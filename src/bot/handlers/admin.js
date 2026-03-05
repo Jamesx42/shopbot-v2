@@ -1,35 +1,37 @@
 // src/bot/handlers/admin.js
 import { InlineKeyboard } from 'grammy';
 import { getAllProducts, createProduct, toggleProduct, addLicenseKeys, getStockCount } from '../../collections/products.js';
-import { getUserCount }   from '../../collections/users.js';
+import { getUserCount, getUsersPaginated } from '../../collections/users.js';
 import { getOrderCount, getRevenue } from '../../collections/orders.js';
 import { getPendingRecharges, completeRecharge } from '../../collections/recharges.js';
 import { setSession, getSession, clearSession } from '../../collections/sessions.js';
-import { fmt, safeEdit }  from '../helpers.js';
+import { getTransactionsByUserPaginated } from '../../collections/transactions.js';
+import { fmt, safeEdit } from '../helpers.js';
 
 // ── Admin Menu ────────────────────────────────────────────
 export async function adminHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const pending = await getPendingRecharges();
-  const badge   = pending.length ? ` (${pending.length})` : '';
+  const badge = pending.length ? ` (${pending.length})` : '';
 
   const keyboard = new InlineKeyboard()
-    .text('📦  Products',              'admin_products').row()
-    .text('🔑  Add Keys',              'admin_keys').row()
+    .text('📦  Products', 'admin_products').row()
+    .text('🔑  Add Keys', 'admin_keys').row()
     .text(`⚡  Recharge Queue${badge}`, 'admin_recharges').row()
-    .text('📊  Stats',                 'admin_stats').row()
-    .text('🏠  Main Menu',             'start');
+    .text('👥  Users', 'admin_users_0').row()
+    .text('📊  Stats', 'admin_stats').row()
+    .text('🏠  Main Menu', 'start');
 
   await safeEdit(ctx, '👑 *Admin Panel*', {
-    parse_mode:   'Markdown',
+    parse_mode: 'Markdown',
     reply_markup: keyboard,
   });
 }
 
 // ── Product List ──────────────────────────────────────────
 export async function adminProductsHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const products = await getAllProducts();
 
@@ -37,25 +39,25 @@ export async function adminProductsHandler(ctx) {
     .text('➕  Add Product', 'admin_add_product').row();
 
   for (const p of products) {
-    const stock  = await getStockCount(p._id.toString());
+    const stock = await getStockCount(p._id.toString());
     const status = p.isActive ? '✅' : '❌';
     keyboard.text(`${status} ${p.name} — ${fmt.usdt(p.price)} (${stock})`, `admin_prod_${p._id}`).row();
   }
   keyboard.text('⬅️  Back', 'admin');
 
   await safeEdit(ctx, '📦 *Products*', {
-    parse_mode:   'Markdown',
+    parse_mode: 'Markdown',
     reply_markup: keyboard,
   });
 }
 
 // ── Product Actions ───────────────────────────────────────
 export async function adminProductActionsHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const productId = ctx.match[1];
-  const products  = await getAllProducts();
-  const product   = products.find(p => p._id.toString() === productId);
+  const products = await getAllProducts();
+  const product = products.find(p => p._id.toString() === productId);
   if (!product) return;
 
   const stock = await getStockCount(productId);
@@ -67,7 +69,7 @@ export async function adminProductActionsHandler(ctx) {
     `Status: ${product.isActive ? '✅ Active' : '❌ Inactive'}\n` +
     `Stock: ${stock} keys  |  Sold: ${product.totalSold}`,
     {
-      parse_mode:   'Markdown',
+      parse_mode: 'Markdown',
       reply_markup: new InlineKeyboard()
         .text(product.isActive ? '❌  Deactivate' : '✅  Activate', `admin_toggle_${productId}`).row()
         .text('🔑  Add Keys', `admin_addkeys_${productId}`).row()
@@ -79,17 +81,17 @@ export async function adminProductActionsHandler(ctx) {
 // ── Toggle Active ─────────────────────────────────────────
 export async function adminToggleHandler(ctx) {
   const productId = ctx.match[1];
-  const newState  = await toggleProduct(productId);
+  const newState = await toggleProduct(productId);
   await ctx.answerCallbackQuery({
-    text:       newState ? '✅ Product activated' : '❌ Product deactivated',
+    text: newState ? '✅ Product activated' : '❌ Product deactivated',
     show_alert: true,
-  }).catch(() => {});
+  }).catch(() => { });
   await adminProductsHandler(ctx);
 }
 
 // ── Start Add Product Flow ────────────────────────────────
 export async function adminAddProductHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
   await setSession(ctx.from.id, { step: 'admin_name' });
   await safeEdit(ctx,
     '➕ *Add Product*\n\nStep 1: Enter the *product name*:',
@@ -99,7 +101,7 @@ export async function adminAddProductHandler(ctx) {
 
 // ── Start Add Keys Flow ───────────────────────────────────
 export async function adminAddKeysHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
   const productId = ctx.match[1];
   await setSession(ctx.from.id, { step: 'admin_keys', productId });
   await ctx.reply(
@@ -155,7 +157,7 @@ export async function adminTextHandler(ctx) {
       `Price: *${fmt.usdt(s.price)}*\n` +
       `Recharge Price: *${fmt.usdt(s.rechargePrice)}*`,
       {
-        parse_mode:   'Markdown',
+        parse_mode: 'Markdown',
         reply_markup: new InlineKeyboard()
           .text('✅  Create', 'admin_confirm_product').row()
           .text('❌  Cancel', 'admin_products'),
@@ -172,7 +174,7 @@ export async function adminTextHandler(ctx) {
       await ctx.reply(
         `✅ *${count} keys added successfully!*`,
         {
-          parse_mode:   'Markdown',
+          parse_mode: 'Markdown',
           reply_markup: new InlineKeyboard().text('⬅️  Back to Products', 'admin_products'),
         }
       );
@@ -187,7 +189,7 @@ export async function adminTextHandler(ctx) {
 
 // ── Confirm Create Product ────────────────────────────────
 export async function adminConfirmProductHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const session = await getSession(ctx.from.id);
   if (!session?.name) {
@@ -196,9 +198,9 @@ export async function adminConfirmProductHandler(ctx) {
   }
 
   await createProduct({
-    name:          session.name,
-    description:   session.description,
-    price:         session.price,
+    name: session.name,
+    description: session.description,
+    price: session.price,
     rechargePrice: session.rechargePrice,
   });
 
@@ -207,7 +209,7 @@ export async function adminConfirmProductHandler(ctx) {
   await safeEdit(ctx,
     `✅ *Product Created!*\n\n*${session.name}* — ${fmt.usdt(session.price)}\nRecharge: ${fmt.usdt(session.rechargePrice)}\n\nNow add license keys to it.`,
     {
-      parse_mode:   'Markdown',
+      parse_mode: 'Markdown',
       reply_markup: new InlineKeyboard().text('📦  View Products', 'admin_products'),
     }
   );
@@ -215,7 +217,7 @@ export async function adminConfirmProductHandler(ctx) {
 
 // ── Stats ─────────────────────────────────────────────────
 export async function adminStatsHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const [userCount, orderCount, revenue] = await Promise.all([
     getUserCount(),
@@ -229,7 +231,7 @@ export async function adminStatsHandler(ctx) {
     `🛒 Total Orders: ${orderCount}\n` +
     `💰 Total Revenue: *${fmt.usdt(revenue)}*`,
     {
-      parse_mode:   'Markdown',
+      parse_mode: 'Markdown',
       reply_markup: new InlineKeyboard()
         .text('🔄  Refresh', 'admin_stats').row()
         .text('⬅️  Back', 'admin'),
@@ -239,7 +241,7 @@ export async function adminStatsHandler(ctx) {
 
 // ── Keys Menu (select product) ────────────────────────────
 export async function adminKeysMenuHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const products = await getAllProducts();
   if (!products.length) {
@@ -256,14 +258,14 @@ export async function adminKeysMenuHandler(ctx) {
   keyboard.text('⬅️  Back', 'admin');
 
   await safeEdit(ctx, '🔑 *Add Keys — Select Product:*', {
-    parse_mode:   'Markdown',
+    parse_mode: 'Markdown',
     reply_markup: keyboard,
   });
 }
 
 // ── Recharge Queue ────────────────────────────────────────
 export async function adminRechargesHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const recharges = await getPendingRecharges();
 
@@ -271,7 +273,7 @@ export async function adminRechargesHandler(ctx) {
     await safeEdit(ctx,
       `⚡ *Recharge Queue*\n\nNo pending recharges.`,
       {
-        parse_mode:   'Markdown',
+        parse_mode: 'Markdown',
         reply_markup: new InlineKeyboard().text('⬅️  Back', 'admin'),
       }
     );
@@ -293,14 +295,14 @@ export async function adminRechargesHandler(ctx) {
 
 // ── View Single Recharge ──────────────────────────────────
 export async function adminRechargeViewHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const rechargeId = ctx.match[1];
   const { getRechargeById } = await import('../../collections/recharges.js');
   const recharge = await getRechargeById(rechargeId);
 
   if (!recharge) {
-    await ctx.answerCallbackQuery({ text: 'Not found.', show_alert: true }).catch(() => {});
+    await ctx.answerCallbackQuery({ text: 'Not found.', show_alert: true }).catch(() => { });
     return;
   }
 
@@ -312,7 +314,7 @@ export async function adminRechargeViewHandler(ctx) {
     `📅 Requested: ${fmt.date(recharge.createdAt)}\n` +
     `👤 User ID: \`${recharge.telegramId}\``,
     {
-      parse_mode:   'Markdown',
+      parse_mode: 'Markdown',
       reply_markup: new InlineKeyboard()
         .text('✅  Mark Complete', `admin_recharge_done_${rechargeId}`).row()
         .text('⬅️  Back', 'admin_recharges'),
@@ -320,22 +322,108 @@ export async function adminRechargeViewHandler(ctx) {
   );
 }
 
-// ── Mark Recharge Complete (from queue or chat button) ────
+// ── User List (paginated, load more) ─────────────────────
+export async function adminUsersHandler(ctx) {
+  await ctx.answerCallbackQuery().catch(() => { });
+
+  const skip = Number(ctx.match[1]) || 0;
+  const limit = 20;
+  const { users, total } = await getUsersPaginated(skip, limit);
+  const isFirst = skip === 0;
+
+  if (!users.length) {
+    await safeEdit(ctx, '👥 *Users*\n\nNo users yet.', {
+      parse_mode: 'Markdown',
+      reply_markup: new InlineKeyboard().text('⬅️  Back', 'admin'),
+    });
+    return;
+  }
+
+  // Build keyboard — append to existing if loading more
+  const keyboard = new InlineKeyboard();
+  for (const u of users) {
+    const name = u.username ? `@${u.username}` : u.firstName || `#${u.telegramId}`;
+    const label = `${name}  ·  ${fmt.usdt(u.balance)}`;
+    keyboard.text(label, `admin_user_${u.telegramId}_0`).row();
+  }
+
+  const loaded = skip + users.length;
+  if (loaded < total) {
+    keyboard.text(`➕  Load More  (${loaded}/${total})`, `admin_users_${loaded}`).row();
+  }
+  keyboard.text('⬅️  Back', 'admin');
+
+  const headerText = `👥 *Users* (${loaded}/${total})`;
+
+  // First load — edit message. Load more — edit same message to append rows
+  await safeEdit(ctx, headerText, {
+    parse_mode: 'Markdown',
+    reply_markup: keyboard,
+  });
+}
+
+// ── User Detail + Transactions ────────────────────────────
+export async function adminUserDetailHandler(ctx) {
+  await ctx.answerCallbackQuery().catch(() => { });
+
+  const telegramId = Number(ctx.match[1]);
+  const txSkip = Number(ctx.match[2]) || 0;
+  const txLimit = 10;
+
+  const { getUserByTelegramId } = await import('../../collections/users.js');
+  const user = await getUserByTelegramId(telegramId);
+
+  if (!user) {
+    await ctx.answerCallbackQuery({ text: 'User not found.', show_alert: true }).catch(() => { });
+    return;
+  }
+
+  const { txns, total } = await getTransactionsByUserPaginated(telegramId, txSkip, txLimit);
+  const typeEmoji = { deposit: '⬆️', purchase: '⬇️', recharge: '⬇️' };
+
+  const name = user.username ? `@${user.username}` : user.firstName || `#${user.telegramId}`;
+
+  let txText = txns.length
+    ? txns.map(t =>
+      `${typeEmoji[t.type] || '•'} ${t.description}\n` +
+      `   ${t.amount > 0 ? '+' : ''}${fmt.usdt(t.amount)}  _${fmt.date(t.createdAt)}_`
+    ).join('\n')
+    : '_No transactions yet._';
+
+  const loaded = txSkip + txns.length;
+
+  const text =
+    `👤 *${name}*\n` +
+    `ID: \`${user.telegramId}\`\n` +
+    `Joined: ${fmt.date(user.createdAt)}\n\n` +
+    `💰 Balance: *${fmt.usdt(user.balance)}*\n` +
+    `📈 Deposited: ${fmt.usdt(user.totalDeposited)}\n` +
+    `🛒 Spent: ${fmt.usdt(user.totalSpent)}\n\n` +
+    `📜 *Transactions* (${loaded}/${total}):\n${txText}`;
+
+  const keyboard = new InlineKeyboard();
+  if (loaded < total) {
+    keyboard.text(`➕  Load More Transactions`, `admin_user_${telegramId}_${loaded}`).row();
+  }
+  keyboard.text('⬅️  Back to Users', 'admin_users_0');
+
+  await safeEdit(ctx, text, { parse_mode: 'Markdown', reply_markup: keyboard });
+}
 export async function adminRechargeCompleteHandler(ctx) {
-  await ctx.answerCallbackQuery({ text: 'Marking complete...' }).catch(() => {});
+  await ctx.answerCallbackQuery({ text: 'Marking complete...' }).catch(() => { });
 
   const rechargeId = ctx.match[1];
-  const recharge   = await completeRecharge(rechargeId);
+  const recharge = await completeRecharge(rechargeId);
 
   if (!recharge) {
-    await ctx.answerCallbackQuery({ text: 'Already completed or not found.', show_alert: true }).catch(() => {});
+    await ctx.answerCallbackQuery({ text: 'Already completed or not found.', show_alert: true }).catch(() => { });
     return;
   }
 
   await ctx.editMessageText(
     ctx.callbackQuery.message.text + '\n\n✅ *Completed!*',
     { parse_mode: 'Markdown' }
-  ).catch(() => {});
+  ).catch(() => { });
 
   await ctx.api.sendMessage(
     recharge.telegramId,

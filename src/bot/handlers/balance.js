@@ -1,10 +1,10 @@
 // src/bot/handlers/balance.js
-import { InlineKeyboard }        from 'grammy';
+import { InlineKeyboard } from 'grammy';
 import { getTransactionsByUser } from '../../collections/transactions.js';
-import { fmt, safeEdit }         from '../helpers.js';
+import { fmt, safeEdit } from '../helpers.js';
 
 export async function balanceHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const user = ctx.user;
   const txns = await getTransactionsByUser(user.telegramId);
@@ -15,7 +15,7 @@ export async function balanceHandler(ctx) {
   if (txns.length) {
     txText = '\n\n📜 *Recent Transactions:*\n' +
       txns.map(t =>
-        `${typeEmoji[t.type] || '•'} ${t.description}  ${t.amount > 0 ? '+' : ''}${fmt.usdt(t.amount)}`
+        `${typeEmoji[t.type] || '•'} ${t.description}  ${t.amount > 0 ? '+' : ''}${fmt.usdt(t.amount)}  _${fmt.date(t.createdAt)}_`
       ).join('\n');
   }
 
@@ -28,7 +28,7 @@ export async function balanceHandler(ctx) {
 
   const keyboard = new InlineKeyboard()
     .text('💰  Load Balance', 'deposit').row()
-    .text('⬅️  Back',         'start');
+    .text('⬅️  Back', 'start');
 
   await safeEdit(ctx, text, { parse_mode: 'Markdown', reply_markup: keyboard });
 }

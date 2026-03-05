@@ -10,16 +10,16 @@ export const kb = {
   mainMenu: () =>
     new InlineKeyboard()
       .text('🛍  Shop', 'shop').row()
+      .text('📦  My Orders', 'orders').row()
       .text('💰  Load Balance', 'deposit').row()
-      .text('💼  My Balance', 'balance').row()
-      .text('📦  My Orders', 'orders'),
+      .text('💼  My Balance', 'balance'),
 
   mainMenuAdmin: () =>
     new InlineKeyboard()
       .text('🛍  Shop', 'shop').row()
+      .text('📦  My Orders', 'orders').row()
       .text('💰  Load Balance', 'deposit').row()
       .text('💼  My Balance', 'balance').row()
-      .text('📦  My Orders', 'orders').row()
       .text('👑  Admin Panel', 'admin'),
 
   backToMain: () =>

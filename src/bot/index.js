@@ -14,6 +14,7 @@ import {
   adminToggleHandler, adminAddProductHandler, adminAddKeysHandler,
   adminTextHandler, adminConfirmProductHandler, adminStatsHandler,
   adminKeysMenuHandler, adminRechargesHandler, adminRechargeViewHandler,
+  adminUsersHandler, adminUserDetailHandler,
 } from './handlers/admin.js';
 
 export function createBot() {
@@ -25,7 +26,6 @@ export function createBot() {
 
   // ── Commands ─────────────────────────────────────────────
   bot.command('start', startHandler);
-  bot.command('menu', startHandler);
   bot.command('admin', adminMiddleware, adminHandler);
 
   // ── Main navigation ──────────────────────────────────────
@@ -56,6 +56,8 @@ export function createBot() {
   bot.callbackQuery(/^check_(.+)$/, checkDepositHandler);
 
   // ── Admin ────────────────────────────────────────────────
+  bot.callbackQuery(/^admin_users_(\d+)$/, adminMiddleware, adminUsersHandler);
+  bot.callbackQuery(/^admin_user_(\d+)_(\d+)$/, adminMiddleware, adminUserDetailHandler);
   bot.callbackQuery('admin_products', adminMiddleware, adminProductsHandler);
   bot.callbackQuery('admin_keys', adminMiddleware, adminKeysMenuHandler);
   bot.callbackQuery('admin_stats', adminMiddleware, adminStatsHandler);

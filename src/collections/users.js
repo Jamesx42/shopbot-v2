@@ -12,15 +12,15 @@ export async function findOrCreateUser(from) {
     {
       $setOnInsert: {
         telegramId,
-        balance:        0,
+        balance: 0,
         totalDeposited: 0,
-        totalSpent:     0,
-        isBanned:       false,
-        createdAt:      now,
+        totalSpent: 0,
+        isBanned: false,
+        createdAt: now,
       },
       $set: {
         firstName: first_name || '',
-        username:  username   || null,
+        username: username || null,
         updatedAt: now,
       },
     },
@@ -58,6 +58,17 @@ export async function debitUserBalance(telegramId, amountCents, session = null) 
   );
   if (!result) throw new Error('INSUFFICIENT_BALANCE');
   return result;
+}
+
+export async function getUsersPaginated(skip = 0, limit = 20) {
+  const users = await col()
+    .find({})
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .toArray();
+  const total = await col().countDocuments();
+  return { users, total };
 }
 
 export async function getUserCount() {
