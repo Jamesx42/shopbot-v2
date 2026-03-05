@@ -1,20 +1,20 @@
 // src/bot/handlers/recharge.js
-import { InlineKeyboard }  from 'grammy';
-import { getOrderById }    from '../../collections/orders.js';
+import { InlineKeyboard } from 'grammy';
+import { getOrderById } from '../../collections/orders.js';
 import { createRecharge, completeRecharge } from '../../collections/recharges.js';
-import { debit }           from '../../services/balance.js';
-import { getConfig }       from '../../config.js';
-import { fmt, safeEdit }   from '../helpers.js';
+import { debit } from '../../services/balance.js';
+import { getConfig } from '../../config.js';
+import { fmt, kb, safeEdit } from '../helpers.js';
 
 // User taps ⚡ Recharge on an order
 export async function requestRechargeHandler(ctx) {
-  await ctx.answerCallbackQuery().catch(() => {});
+  await ctx.answerCallbackQuery().catch(() => { });
 
   const orderId = ctx.match[1];
-  const order   = await getOrderById(orderId, ctx.user.telegramId);
+  const order = await getOrderById(orderId, ctx.user.telegramId);
 
   if (!order) {
-    await ctx.answerCallbackQuery({ text: 'Order not found.', show_alert: true }).catch(() => {});
+    await ctx.answerCallbackQuery({ text: 'Order not found.', show_alert: true }).catch(() => { });
     return;
   }
 
@@ -27,7 +27,7 @@ export async function requestRechargeHandler(ctx) {
       `Your balance: *${fmt.usdt(ctx.user.balance)}*\n\n` +
       `Please load your balance first.`,
       {
-        parse_mode:   'Markdown',
+        parse_mode: 'Markdown',
         reply_markup: new InlineKeyboard()
           .text('💰  Load Balance', 'deposit').row()
           .text('⬅️  Back', `order_${orderId}`),
@@ -44,20 +44,20 @@ export async function requestRechargeHandler(ctx) {
     `Your Balance: *${fmt.usdt(ctx.user.balance)}*\n\n` +
     `Balance will be deducted now. Admin will be notified to recharge your account.`,
     {
-      parse_mode:   'Markdown',
+      parse_mode: 'Markdown',
       reply_markup: new InlineKeyboard()
         .text('✅  Confirm Recharge', `confirm_recharge_${orderId}`).row()
-        .text('❌  Cancel',           `order_${orderId}`),
+        .text('❌  Cancel', `order_${orderId}`),
     }
   );
 }
 
 // User confirms recharge
 export async function confirmRechargeHandler(ctx) {
-  await ctx.answerCallbackQuery({ text: 'Processing...' }).catch(() => {});
+  await ctx.answerCallbackQuery({ text: 'Processing...' }).catch(() => { });
 
   const orderId = ctx.match[1];
-  const order   = await getOrderById(orderId, ctx.user.telegramId);
+  const order = await getOrderById(orderId, ctx.user.telegramId);
   if (!order) return;
 
   const cost = order.rechargePrice || order.amountPaid;
@@ -66,22 +66,21 @@ export async function confirmRechargeHandler(ctx) {
     await debit(ctx.user.telegramId, cost, `Recharge: ${order.productName}`, orderId);
 
     const rechargeId = await createRecharge({
-      telegramId:  ctx.user.telegramId,
+      telegramId: ctx.user.telegramId,
       orderId,
       productName: order.productName,
-      licenseKey:  order.licenseKey,
-      amount:      cost,
+      licenseKey: order.licenseKey,
+      amount: cost,
     });
 
-    await safeEdit(ctx,
+    await ctx.deleteMessage().catch(() => { });
+
+    await ctx.reply(
       `✅ *Recharge Requested!*\n\n` +
-      `Product: *${order.productName}*\n` +
-      `Amount deducted: *${fmt.usdt(cost)}*\n\n` +
+      `📦 Product: *${order.productName}*\n` +
+      `💰 Amount deducted: *${fmt.usdt(cost)}*\n\n` +
       `Admin has been notified and will recharge your account shortly.`,
-      {
-        parse_mode:   'Markdown',
-        reply_markup: new InlineKeyboard().text('🏠  Main Menu', 'start'),
-      }
+      { parse_mode: 'Markdown', reply_markup: kb.mainMenu() }
     );
 
     // Notify admins
@@ -99,7 +98,7 @@ export async function confirmRechargeHandler(ctx) {
 
     for (const adminId of ADMIN_IDS) {
       await ctx.api.sendMessage(adminId, adminMsg, {
-        parse_mode:   'Markdown',
+        parse_mode: 'Markdown',
         reply_markup: new InlineKeyboard()
           .text('✅  Mark Complete', `admin_recharge_done_${rechargeId}`),
       }).catch(e => console.error(`[RECHARGE] Admin notify failed ${adminId}:`, e.message));
@@ -117,13 +116,13 @@ export async function confirmRechargeHandler(ctx) {
 
 // Admin marks recharge complete (from chat notification button)
 export async function adminRechargeCompleteHandler(ctx) {
-  await ctx.answerCallbackQuery({ text: 'Marking complete...' }).catch(() => {});
+  await ctx.answerCallbackQuery({ text: 'Marking complete...' }).catch(() => { });
 
   const rechargeId = ctx.match[1];
-  const recharge   = await completeRecharge(rechargeId);
+  const recharge = await completeRecharge(rechargeId);
 
   if (!recharge) {
-    await ctx.answerCallbackQuery({ text: 'Already completed or not found.', show_alert: true }).catch(() => {});
+    await ctx.answerCallbackQuery({ text: 'Already completed or not found.', show_alert: true }).catch(() => { });
     return;
   }
 
@@ -131,7 +130,7 @@ export async function adminRechargeCompleteHandler(ctx) {
   await ctx.editMessageText(
     ctx.callbackQuery.message.text + '\n\n✅ *Completed!*',
     { parse_mode: 'Markdown' }
-  ).catch(() => {});
+  ).catch(() => { });
 
   // Notify buyer
   await ctx.api.sendMessage(
@@ -140,6 +139,6 @@ export async function adminRechargeCompleteHandler(ctx) {
     `📦 Product: *${recharge.productName}*\n` +
     `💰 Amount: *${fmt.usdt(recharge.amount)}*\n\n` +
     `You're all set! Enjoy.`,
-    { parse_mode: 'Markdown' }
+    { parse_mode: 'Markdown', reply_markup: kb.mainMenu() }
   ).catch(e => console.error('[RECHARGE] Buyer notify failed:', e.message));
 }

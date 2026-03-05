@@ -14,6 +14,12 @@ console.log('✅ MongoDB connected');
 
 const bot = createBot();
 
+// Register bot command menu (shown in the "/" menu bar)
+await bot.api.setMyCommands([
+  { command: 'start', description: '🏠 Main Menu' },
+  { command: 'menu',  description: '🏠 Main Menu' },
+]);
+
 // Delete any existing webhook — ensure long polling works cleanly
 await bot.api.deleteWebhook({ drop_pending_updates: true });
 console.log('✅ Webhook cleared — starting long polling');

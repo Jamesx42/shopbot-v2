@@ -25,6 +25,7 @@ export function createBot() {
 
   // ── Commands ─────────────────────────────────────────────
   bot.command('start', startHandler);
+  bot.command('menu', startHandler);
   bot.command('admin', adminMiddleware, adminHandler);
 
   // ── Main navigation ──────────────────────────────────────

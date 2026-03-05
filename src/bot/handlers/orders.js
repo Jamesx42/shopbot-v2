@@ -28,7 +28,7 @@ export async function ordersHandler(ctx) {
   keyboard.text('⬅️  Back', 'start');
 
   await safeEdit(ctx,
-    `📦 *My Orders* (last ${orders.length})\n\nTap an order to view credentials:`,
+    `📦 *My Orders* (${orders.length} ${orders.length === 1 ? 'account' : 'accounts'})\n\nTap an order to view credentials:`,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 }
