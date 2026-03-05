@@ -33,6 +33,18 @@ export async function createPayment({ amountUsdt, payCurrency, depositId }) {
   return res.json();
 }
 
+export async function getBalance() {
+  const { NOWPAYMENTS_API_URL } = getConfig();
+  const res = await fetch(`${NOWPAYMENTS_API_URL}/balance`, {
+    headers: getHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`NowPayments balance error (${res.status}): ${err}`);
+  }
+  return res.json();
+}
+
 export async function getPaymentStatus(paymentId) {
   const { NOWPAYMENTS_API_URL } = getConfig();
   const res = await fetch(`${NOWPAYMENTS_API_URL}/payment/${paymentId}`, {

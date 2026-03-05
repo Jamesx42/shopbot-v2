@@ -7,6 +7,7 @@ import { getPendingRecharges, completeRecharge } from '../../collections/recharg
 import { setSession, getSession, clearSession } from '../../collections/sessions.js';
 import { getTransactionsByUserPaginated } from '../../collections/transactions.js';
 import { fmt, safeEdit } from '../helpers.js';
+import { getBalance } from '../../services/nowpayments.js';
 
 // ── Admin Menu ────────────────────────────────────────────
 export async function adminHandler(ctx) {
@@ -21,6 +22,8 @@ export async function adminHandler(ctx) {
     .text(`⚡  Recharge Queue${badge}`, 'admin_recharges').row()
     .text('👥  Users', 'admin_users_0').row()
     .text('📊  Stats', 'admin_stats').row()
+    .text('💰  Main Balance', 'admin_balance').row()
+    .text('🌐  Server IP', 'admin_serverip').row()
     .text('🏠  Main Menu', 'start');
 
   await safeEdit(ctx, '👑 *Admin Panel*', {
@@ -329,7 +332,6 @@ export async function adminUsersHandler(ctx) {
   const skip = Number(ctx.match[1]) || 0;
   const limit = 20;
   const { users, total } = await getUsersPaginated(skip, limit);
-  const isFirst = skip === 0;
 
   if (!users.length) {
     await safeEdit(ctx, '👥 *Users*\n\nNo users yet.', {
@@ -409,6 +411,56 @@ export async function adminUserDetailHandler(ctx) {
 
   await safeEdit(ctx, text, { parse_mode: 'Markdown', reply_markup: keyboard });
 }
+// ── Server IP ─────────────────────────────────────────────
+export async function adminServerIpHandler(ctx) {
+  await ctx.answerCallbackQuery().catch(() => { });
+
+  const [v4Result, v6Result] = await Promise.allSettled([
+    fetch('https://api4.ipify.org?format=json').then(r => r.json()),
+    fetch('https://api6.ipify.org?format=json').then(r => r.json()),
+  ]);
+
+  const ipv4 = v4Result.status === 'fulfilled' ? v4Result.value.ip : null;
+  const ipv6 = v6Result.status === 'fulfilled' ? v6Result.value.ip : null;
+
+  const lines = [
+    `🌐 *Server Public IP*\n`,
+    ipv4 ? `*IPv4:*\n\`${ipv4}\`` : `*IPv4:* _unavailable_`,
+    ipv6 ? `*IPv6:*\n\`${ipv6}\`` : `*IPv6:* _unavailable_`,
+    `\n_Tap an address to copy, then whitelist it in NowPayments._`,
+  ].join('\n');
+
+  await safeEdit(ctx, lines, {
+    parse_mode: 'Markdown',
+    reply_markup: new InlineKeyboard().text('⬅️  Back', 'admin'),
+  });
+}
+
+// ── Main Balance (NowPayments) ────────────────────────────
+export async function adminBalanceHandler(ctx) {
+  await ctx.answerCallbackQuery().catch(() => { });
+
+  let text;
+  try {
+    const data = await getBalance();
+    // data.currencies is an object keyed by currency code
+    const currencies = data.currencies ?? data;
+    const lines = Object.entries(currencies)
+      .map(([cur, info]) => `• \`${cur.toUpperCase()}\`: *${info.amount}*`)
+      .join('\n');
+    text = `💰 *NowPayments Main Balance*\n\n${lines || '_No balances found._'}`;
+  } catch (err) {
+    text = `❌ Failed to fetch balance: ${err.message}`;
+  }
+
+  await safeEdit(ctx, text, {
+    parse_mode: 'Markdown',
+    reply_markup: new InlineKeyboard()
+      .text('🔄  Refresh', 'admin_balance').row()
+      .text('⬅️  Back', 'admin'),
+  });
+}
+
 export async function adminRechargeCompleteHandler(ctx) {
   await ctx.answerCallbackQuery({ text: 'Marking complete...' }).catch(() => { });
 
