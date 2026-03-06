@@ -137,7 +137,7 @@ export async function confirmBuyHandler(ctx) {
       `✅ *Purchase Successful!*\n\n` +
       `📦 Product: *${product.name}*\n` +
       `💰 Paid: *${fmt.usdt(product.price)}*\n\n` +
-      `🔐 *Your Credentials:*\n\n\`${licenseKey.key}\`\n\n` +
+      `🔐 *Your Credentials:*\n_Format: \`username:password\`_\n\n\`${licenseKey.key}\`\n\n` +
       `_View anytime in 📦 My Orders._`,
       { parse_mode: 'Markdown', reply_markup: kb.mainMenu() }
     );

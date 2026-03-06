@@ -49,7 +49,7 @@ export async function orderDetailHandler(ctx) {
     `Product: *${order.productName}*\n` +
     `Paid: *${fmt.usdt(order.amountPaid)}*\n` +
     `Date: ${fmt.date(order.createdAt)}\n\n` +
-    `🔐 *Login Credentials:*\n\`${order.licenseKey}\``;
+    `🔐 *Login Credentials:*\n_Format: \`username:password\`_\n\`${order.licenseKey}\``;
 
   const keyboard = new InlineKeyboard()
     .text(`⚡  Recharge  ${fmt.usdt(order.rechargePrice)}`, `recharge_${orderId}`).row()

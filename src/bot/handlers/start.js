@@ -3,16 +3,15 @@ import { fmt, kb } from '../helpers.js';
 import { getConfig } from '../../config.js';
 
 export async function startHandler(ctx) {
-  if (ctx.callbackQuery) await ctx.answerCallbackQuery().catch(() => {});
+  if (ctx.callbackQuery) await ctx.answerCallbackQuery().catch(() => { });
 
-  const user    = ctx.user;
+  const user = ctx.user;
   const { ADMIN_IDS } = getConfig();
   const isAdmin = ADMIN_IDS.includes(ctx.from.id);
 
   const text =
-    `👋 Welcome${user.firstName ? `, *${user.firstName}*` : ''}!\n\n` +
-    `🏪 *Digital Shop Bot*\n` +
-    `Buy digital products instantly.\n\n` +
+    `🎰 *Slots Buy Bot*\n` +
+    `⚡ Instant game credits — best rates, 24/7.\n\n` +
     `💼 Your Balance: *${fmt.usdt(user.balance)}*`;
 
   const keyboard = isAdmin ? kb.mainMenuAdmin() : kb.mainMenu();
