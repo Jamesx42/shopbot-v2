@@ -11,7 +11,8 @@ export async function startHandler(ctx) {
 
   const text =
     `🎰 *Slots Buy Bot*\n` +
-    `⚡ Instant game credits — best rates, 24/7.\n\n` +
+    `⚡ Instant game credits — best rates, 24/7.\n` +
+    `_*Buy/Recharge - 1000 Credits_\n\n` +
     `💼 Your Balance: *${fmt.usdt(user.balance)}*`;
 
   const keyboard = isAdmin ? kb.mainMenuAdmin() : kb.mainMenu();
